@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+	<Resource maxIdle="100" maxActive="500"
+		url="jdbc:mysql://localhost:3306/dev22db07"
+		driverClassName="com.mysql.jdbc.Driver" password="dev22pw07"
+		username="dev22id07" type="javax.sql.DataSource" auth="Container"
+		name="jdbc/studydb" />
+
+</Context>
+  
