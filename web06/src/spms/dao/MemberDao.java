@@ -1,6 +1,6 @@
 package spms.dao;
 
-// MemberDao �씤�꽣�럹�씠�뒪 �젙�쓽 
+// MemberDao 인터페이스 정의 
 import java.util.List;
 
 import spms.vo.Member;
@@ -12,5 +12,4 @@ public interface MemberDao {
   Member selectOne(int no) throws Exception;
   int update(Member member) throws Exception;
   Member exist(String email, String password) throws Exception;
-  
 }

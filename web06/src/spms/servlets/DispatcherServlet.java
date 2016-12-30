@@ -2,7 +2,6 @@ package spms.servlets;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -11,76 +10,70 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import spms.bind.DataBinding;
 import spms.bind.ServletRequestDataBinder;
-import spms.controls.*;
-import spms.vo.Member;
+import spms.controls.Controller;
 
+// DataBinding ì²˜ë¦¬
 @SuppressWarnings("serial")
 @WebServlet("*.do")
 public class DispatcherServlet extends HttpServlet {
-	@Override
-	protected void service(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.setContentType("text/html; charset=UTF-8");
-		String servletPath = request.getServletPath();
-		try {
+  @Override
+  protected void service(
+      HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    response.setContentType("text/html; charset=UTF-8");
+    String servletPath = request.getServletPath();
+    try {
+      ServletContext sc = this.getServletContext();
+      
+      // í˜ì´ì§€ ì»¨íŠ¸ë¡¤ëŸ¬ì—ê²Œ ì „ë‹¬í•  Map ê°ì²´ë¥¼ ì¤€ë¹„í•œë‹¤. 
+      HashMap<String,Object> model = new HashMap<String,Object>();
+      model.put("session", request.getSession());
+      
+      Controller pageController = (Controller) sc.getAttribute(servletPath);
+      
+      if (pageController instanceof DataBinding) {
+        prepareRequestData(request, model, (DataBinding)pageController);
+      }
 
-			Controller controller = null;
-			ServletContext sc = this.getServletContext();
-			Map<String, Object> model = new HashMap<String, Object>();
-			// model ¾È¿¡ memberDao ÁÖÀÔ
-			// ¹®Á¦ 1 : ¸ğµç ÄÁÆ®·Ñ·¯°¡ dao¸¦ ÁÖÀÔ¹Ş°Ô µÈ´Ù.
-			// model.put("memberDao", sc.getAttribute("memberDao"));
-			// System.out.println(sc.getAttribute("memberDao")+" : sc Ã¼Å©");
+      // í˜ì´ì§€ ì»¨íŠ¸ë¡¤ëŸ¬ë¥¼ ì‹¤í–‰í•œë‹¤.
+      String viewUrl = pageController.execute(model);
+      
+      // Map ê°ì²´ì— ì €ì¥ëœ ê°’ì„ ServletRequestì— ë³µì‚¬í•œë‹¤.
+      for (String key : model.keySet()) {
+        request.setAttribute(key, model.get(key));
+      }
+      
+      if (viewUrl.startsWith("redirect:")) {
+        response.sendRedirect(viewUrl.substring(9));
+        return;
+      } else {
+        RequestDispatcher rd = request.getRequestDispatcher(viewUrl);
+        rd.include(request, response);
+      }
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+      request.setAttribute("error", e);
+      RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
+      rd.forward(request, response);
+    }
+  }
 
-			// begin = ¿äÃ»ºĞ±â & pageController °áÁ¤
-			model.put("session", request.getSession());
-			controller = (Controller) sc.getAttribute(servletPath);
-
-			// ´ÙÇü¼º ¿¬»êÀÚ instanceof(°´Ã¼[¿ŞÂÊ]+instanceof+Å¸ÀÔ[¿À¸¥ÂÊ] À§Ä¡)
-			if (controller instanceof DataBinding) {
-				// ¸ğµ¨°´Ã¼¸¦ ÀÚµ¿À¸·Î ¸¸µé¾î ÁÖ´Â ¸Ş¼­µå¸¦ È£ÃâÇÑ´Ù.
-				// controller.getDataBinders();()È£Ãâ ÇÊ¿äÇÑ ¸ğµ¨Å¸ÀÔÀ» Ç®¾î³½´Ù.
-				Object[] dataBinders = ((DataBinding) controller).getDataBinders();
-				// ¸¸µé¾î¾ß ÇÒ °´Ã¼Å¸ÀÔ °´Ã¼ ÀÌ¸§
-				String dataName = null;
-				Class<?> dataType = null;
-				Object dataObj = null;
-				for (int i = 0; i < dataBinders.length; i += 2) {
-					dataName = (String) dataBinders[i];
-					dataType = (Class<?>) dataBinders[i + 1];
-					// some¸Å¼­µå È£Ãâ -> dataType+request
-					dataObj = ServletRequestDataBinder.bind(request, dataType, dataName);
-					// name -> dataType.setName(name°ª);
-					model.put(dataName, dataObj);
-				}
-			}
-
-			// ÄÁÆ®·Ñ È£ÃâÀ» ÅëÇØ view ÀÌ¸§À» ¸®ÅÏ ¹Ş½À´Ï´Ù.
-			System.out.println("controllerÈ®ÀÎ : " + controller);
-			String viewUrl = controller.execute(model);
-			// ¸Ê ¾È¿¡ ÀÖ´Â ³»¿ë
-			// map -> request.attribute·Î ¿Å°Ü°£´Ù.
-			for (String key : model.keySet()) {
-				request.setAttribute(key, model.get(key));
-			}
-			if (viewUrl.startsWith("redirect:")) {
-				response.sendRedirect(viewUrl.substring(9));
-				return;
-
-			} else {
-				RequestDispatcher rd = request.getRequestDispatcher(viewUrl);
-				rd.include(request, response);
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			request.setAttribute("error", e);
-			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
-			rd.forward(request, response);
-		}
-	}
+  private void prepareRequestData(HttpServletRequest request,
+      HashMap<String, Object> model, DataBinding dataBinding)
+      throws Exception {
+    Object[] dataBinders = dataBinding.getDataBinders();
+    String dataName = null;
+    Class<?> dataType = null;
+    Object dataObj = null;
+    for (int i = 0; i < dataBinders.length; i+=2) {
+      dataName = (String)dataBinders[i];
+      dataType = (Class<?>) dataBinders[i+1];
+      dataObj = ServletRequestDataBinder.bind(request, dataType, dataName);
+      model.put(dataName, dataObj);
+    }
+  }
 }

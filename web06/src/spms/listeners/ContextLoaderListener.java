@@ -1,52 +1,53 @@
 package spms.listeners;
 
-// ¼­¹ö¿¡¼­ Á¦°øÇÏ´Â DateSource »ç¿ëÇÏ±â
-import javax.naming.InitialContext;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
-import javax.sql.DataSource;
 
-import spms.controls.LogInController;
-import spms.controls.LogOutController;
-import spms.controls.MemberAddController;
-import spms.controls.MemberDeleteController;
-import spms.controls.MemberListController;
-import spms.controls.MemberUpdateController;
-import spms.dao.MySqlMemberDao;
+import spms.controls.ApplicationContext;
 
+// MySqlMemberDao ï¿½ìŸ»ï¿½ìŠœ
 @WebListener
 public class ContextLoaderListener implements ServletContextListener {
+	private static ApplicationContext applicationContext;
+	//ë³€ìˆ˜ì˜ ìƒëª…ì£¼ê¸°, staticì€ ê°ì²´ë¥¼ ë‹¤ë¥¸ ê°ì²´ë¥¼ ìƒì„±í•˜ì§€ ì•Šê¸° ìœ„í•´ ë½ì‹œí‚¨ê±°ë‹¤.
+	public static ApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
+
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
 		try {
 			ServletContext sc = event.getServletContext();
+			String propertiesPath = sc.getRealPath( 
+					sc.getInitParameter("contextConfigLocation"));
+			
+			
+			applicationContext = new ApplicationContext(propertiesPath);
 
-			InitialContext initialContext = new InitialContext();
-			DataSource ds = (DataSource) initialContext.lookup("java:comp/env/jdbc/studydb");
-			System.out.println("½ÃÀÛ ¸®½º³Ê");
-			//MemberDao memberDao = new MemberDao();
-			MySqlMemberDao memberDao = new MySqlMemberDao();
-			// datasource¸¦ Dao¿¡ ÁÖÀÔ
-			memberDao.setDataSource(ds);
-			
+			// ê°ì²´ê´€ë¦¬ í•˜ëŠ” ì½”ë“œë¥¼  ì‚­ì œ
 			/*
-			 * 1.°øÅë ÀúÀå¼Ò : dao
-			 * 2.°øÅë ÀúÀå¼Ò : controller(+dao)
-			 * */
-			//sc.setAttribute("memberDao", memberDao);
-			
-			sc.setAttribute("/member/list.do", new MemberListController().setMemberDao(memberDao));
-			sc.setAttribute("/member/add.do", new MemberAddController().setMemberDao(memberDao));
-			sc.setAttribute("/member/update.do", new MemberUpdateController().setMemberDao(memberDao));
-			sc.setAttribute("/member/delete.do", new MemberDeleteController().setMemberDao(memberDao));
-			sc.setAttribute("/auth/login.do", new LogInController().setMemberDao(memberDao));
-			sc.setAttribute("/auth/logout.do", new LogOutController().setMemberDao(memberDao));
-			
-			
-			
-			
+			 * InitialContext initialContext = new InitialContext(); DataSource
+			 * ds = (DataSource)initialContext.lookup(
+			 * "java:comp/env/jdbc/studydb");
+			 * 
+			 * MySqlMemberDao memberDao = new MySqlMemberDao();
+			 * memberDao.setDataSource(ds);
+			 * 
+			 * sc.setAttribute("/auth/login.do", new
+			 * LogInController().setMemberDao(memberDao));
+			 * sc.setAttribute("/auth/logout.do", new LogOutController());
+			 * sc.setAttribute("/member/list.do", new
+			 * MemberListController().setMemberDao(memberDao));
+			 * sc.setAttribute("/member/add.do", new
+			 * MemberAddController().setMemberDao(memberDao));
+			 * sc.setAttribute("/member/update.do", new
+			 * MemberUpdateController().setMemberDao(memberDao));
+			 * sc.setAttribute("/member/delete.do", new
+			 * MemberDeleteController().setMemberDao(memberDao));
+			 */
 
 		} catch (Throwable e) {
 			e.printStackTrace();

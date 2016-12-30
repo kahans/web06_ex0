@@ -3,3 +3,4 @@ encoding//src/spms/controls/LogInController.java=UTF-8
 encoding//src/spms/controls/MemberAddController.java=UTF-8
 encoding//src/spms/controls/MemberListController.java=UTF-8
 encoding//src/spms/dao/MemberDao.java=UTF-8
+encoding//src/spms/listeners/ContextLoaderListener.java=UTF-8
